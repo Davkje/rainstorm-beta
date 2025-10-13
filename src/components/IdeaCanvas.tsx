@@ -21,7 +21,7 @@ export default function IdeaCanvas({ id, title, words }: Props) {
         `}
 			>
 				{words.length === 0 ? (
-					<p className="text-slate-500">Drop or Write here</p>
+					<p className="text-slate-200">Drop or Write here</p>
 				) : (
 					words.map((word, i) => (
 						<div
