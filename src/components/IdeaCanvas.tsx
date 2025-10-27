@@ -1,38 +1,47 @@
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+import WordChip from "./WordChip";
 
 type Props = {
-  id: string;
-  title: string;
+	id: string;
+	title: string;
 	words: string[];
+	onAddWord?: () => void;
 };
 
-export default function IdeaCanvas({ id, title, words }: Props) {
+export default function IdeaCanvas({ id, title, words, onAddWord }: Props) {
 	const { setNodeRef, isOver } = useDroppable({
 		id,
+		data: { parentId: id },
 	});
 
 	return (
-		<div className="flex flex-col justify-start w-full p-4 rounded-lg">
-			<h3 className="text-2xl font-bold leading-[0.8] pb-2 ">{title}</h3>
-			<div
-				ref={setNodeRef}
-				className={`w-full min-h-16 flex flex-wrap justify-center items-center gap-2 p-2 rounded-lg transition-colors
-        ${isOver ? " bg-slate-700" : "bg-slate-800"}
-        `}
-			>
-				{words.length === 0 ? (
-					<p className="text-slate-100">Drop or Write here?!?</p>
-				) : (
-					words.map((word, i) => (
-						<div
-							key={i}
-							className="p-2 max-w-max bg-slate-700 font-bold text-xl rounded-lg inline-block capitalize"
-						>
-							{word}
-						</div>
-					))
-				)}
-			</div>
+		<div
+			ref={setNodeRef}
+			className={`flex flex-col p-4 border-2 rounded-lg transition-colors ${
+				isOver ? "border-slate-400 bg-slate-800" : "border-slate-700 bg-slate-900"
+			}`}
+		>
+			<h3 className="text-2xl font-bold pb-2">{title}</h3>
+
+			<SortableContext items={words.map((w) => `${id}-${w}`)} strategy={rectSortingStrategy}>
+				<div className="flex flex-wrap gap-2 justify-center">
+					{words.length === 0 ? (
+						<p className="italic text-slate-400 self-center">Drag word here</p>
+					) : (
+						words.map((word) => <WordChip key={word} word={word} parentId={id} />)
+					)}
+				</div>
+			</SortableContext>
+
+			{onAddWord && (
+				<button
+					onClick={onAddWord}
+					className="mt-2 px-3 py-1 bg-slate-600 rounded hover:bg-slate-500"
+				>
+					Add current word
+				</button>
+			)}
 		</div>
 	);
 }

@@ -1,49 +1,103 @@
 import "./App.css";
 import { useState } from "react";
-import WordGenerator from "./components/WordGenerator";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import IdeaCanvas from "./components/IdeaCanvas";
+import WordGenerator from "./components/WordGenerator";
+import { DragOverlay } from "@dnd-kit/core";
+import WordChip from "./components/WordChip";
+import { arrayMove } from "@dnd-kit/sortable";
 
-function App() {
-	const [canvases, setCanvases] = useState([
-		{ id: "canvas-ideas", title: "Ideas", words: [] as string[] },
-		{ id: "canvas-themes", title: "Themes", words: [] as string[] },
-		{ id: "canvas-characters", title: "Characters", words: [] as string[] },
+type Canvas = {
+	id: string;
+	title: string;
+	words: string[];
+};
+
+export default function App() {
+	const [canvases, setCanvases] = useState<Canvas[]>([
+		{ id: "canvas-ideas", title: "Ideas", words: [] },
+		{ id: "canvas-themes", title: "Themes", words: [] },
+		{ id: "canvas-characters", title: "Characters", words: [] },
 	]);
 
+	const [generatedWord, setGeneratedWord] = useState<string>("Rain");
+	const [draggingWord, setDraggingWord] = useState<{ word: string; parentId: string } | null>(null);
+
+	const sensors = useSensors(useSensor(PointerSensor));
+
+	const handleDragStart = (event: DragStartEvent) => {
+		const activeWord = event.active.data?.current;
+		if (activeWord) setDraggingWord(activeWord);
+	};
+
+	// Hantera drag & drop
 	const handleDragEnd = (event: DragEndEvent) => {
-		const { over, active } = event;
+		setDraggingWord(null);
+		const { active, over } = event;
+		if (!active || !over) return;
 
-		if (!over || !active?.data?.current?.word) return;
+		const activeWord = active.data?.current?.word;
+		const activeParent = active.data?.current?.parentId;
+		const overParent = over.data?.current?.parentId;
+		if (!activeWord || !activeParent || !overParent) return;
 
-		const word = active.data.current.word;
+		// Hindra drop i generator
+		if (overParent === "generator") return;
 
-		setCanvases((prev) =>
-			prev.map((c) =>
-				c.id === over.id && !c.words.includes(word)
-					? { ...c, words: [...c.words, word] }
-					: c
-			)
-		);
+		setCanvases((prev) => {
+			let updated = [...prev];
+
+			// --- Drag mellan olika canvases ---
+			if (activeParent !== overParent) {
+				updated = updated.map((c) => {
+					if (c.id === activeParent)
+						return { ...c, words: c.words.filter((w) => w !== activeWord) };
+					if (c.id === overParent && !c.words.includes(activeWord))
+						return { ...c, words: [...c.words, activeWord] };
+					return c;
+				});
+				return updated;
+			}
+
+			// --- Drag inom samma canvas (sortering) ---
+			const canvasIndex = updated.findIndex((c) => c.id === activeParent);
+			if (canvasIndex === -1) return updated;
+
+			const canvas = updated[canvasIndex];
+			const oldIndex = canvas.words.indexOf(activeWord);
+			const newIndex = canvas.words.indexOf(over.data?.current?.word);
+
+			if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+				const newWords = arrayMove(canvas.words, oldIndex, newIndex);
+				updated[canvasIndex] = { ...canvas, words: newWords };
+			}
+
+			return updated;
+		});
 	};
 
 	return (
-		<>
-			<DndContext onDragEnd={handleDragEnd}>
-				<section className="flex w-full h-full flex-col justify-start gap-4">
-					<h1 className="text-5xl font-bold m-4">RAINSTORM</h1>
-					<div className="flex gap-4 p-4 flex-col">
-						<WordGenerator />
-						<div className="flex flex-col gap-4 border-2 rounded-lg w-full border-slate-700">
-							{canvases.map((c) => (
-								<IdeaCanvas key={c.id} id={c.id} title={c.title} words={c.words} />
-							))}
-						</div>
-					</div>
-				</section>
+		<div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center p-8 m-auto">
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragEnd={handleDragEnd}
+				onDragStart={handleDragStart}
+			>
+				<h1 className="text-4xl font-bold mb-8">RAINSTORM</h1>
+				<WordGenerator currentWord={generatedWord} setCurrentWord={setGeneratedWord} />
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mt-8">
+					{canvases.map((canvas) => (
+						<IdeaCanvas key={canvas.id} id={canvas.id} title={canvas.title} words={canvas.words} />
+					))}
+				</div>
+				<DragOverlay dropAnimation={null}>
+					{draggingWord ? (
+						<WordChip word={draggingWord.word} parentId={draggingWord.parentId} />
+					) : null}
+				</DragOverlay>
 			</DndContext>
-		</>
+		</div>
 	);
 }
-
-export default App;
