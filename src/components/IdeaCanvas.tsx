@@ -22,7 +22,7 @@ export default function IdeaCanvas({ id, title, words, onAddWord }: Props) {
 				isOver ? "border-slate-400 bg-slate-800" : "border-slate-700 bg-slate-900"
 			}`}
 		>
-			<h3 className="text-2xl font-bold pb-2">{title}</h3>
+			<h3 className="text-3xl font-bold pb-2">{title}</h3>
 
 			<SortableContext items={words.map((w) => `${id}-${w}`)} strategy={rectSortingStrategy}>
 				<div className="flex flex-wrap gap-2 justify-center">
