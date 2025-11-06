@@ -3,54 +3,59 @@ import { wordBanks } from "../data/wordBanks";
 import WordChip from "./WordChip";
 
 type Props = {
-  currentWord: string;
-  setCurrentWord: (word: string) => void;
+	currentWord: string;
+	setCurrentWord: (word: string) => void;
 };
 
 export default function WordGenerator({ currentWord, setCurrentWord }: Props) {
-  const [bank, setBank] = useState<keyof typeof wordBanks>("nature");
+	const [bank, setBank] = useState<keyof typeof wordBanks>("nature");
 
-  const getRandomWord = () => {
-    const words = wordBanks[bank];
-    if (!words || words.length === 0) return;
+	const getRandomWord = (customBank?: keyof typeof wordBanks) => {
+		const activeBank = customBank ?? bank;
+		const words = wordBanks[activeBank];
+		if (!words || words.length === 0) return;
 
-    let newWord = words[Math.floor(Math.random() * words.length)];
+		let newWord = words[Math.floor(Math.random() * words.length)];
 
-    // Undvik samma ord som innan om det finns fler än ett
-    while (newWord === currentWord && words.length > 1) {
-      newWord = words[Math.floor(Math.random() * words.length)];
-    }
+		while (newWord === currentWord && words.length > 1) {
+			newWord = words[Math.floor(Math.random() * words.length)];
+		}
+		
+		setCurrentWord(newWord);
+	};
 
-    setCurrentWord(newWord);
-  };
+	const changeBank = (newBank: keyof typeof wordBanks) => {
+		setBank(newBank);
+		getRandomWord(newBank);
+	};
 
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex gap-4">
-        {Object.keys(wordBanks).map((b) => (
-          <button
-            key={b}
-            className={`px-3 py-1 rounded ${
-              bank === b ? "bg-slate-600" : "bg-slate-800"
-            } hover:bg-slate-500`}
-            onClick={() => setBank(b as keyof typeof wordBanks)}
-          >
-            {b}
-          </button>
-        ))}
-      </div>
+	return (
+		<div className="flex flex-col justify-end items-center gap-4">
+			<div className="flex justify-center h-full">
+				<div className="flex flex-col justify-center">
+					<WordChip word={currentWord} parentId="generator" />
+				</div>
+			</div>
+			<div className="flex flex-wrap gap-2 justify-center w-full">
+				{Object.keys(wordBanks).map((bankName) => (
+					<button
+						key={bankName}
+						className={`flex-0 py-2 px-4 rounded text-lg capitalize ${
+							bankName === bank ? "bg-slate-800" : "bg-slate-900"
+						} hover:bg-slate-800`}
+						onClick={() => changeBank(bankName as keyof typeof wordBanks)}
+					>
+						{bankName}
+					</button>
+				))}
+			</div>
 
-      <div className="m-2">
-        {/* WordChip som kan dras */}
-        <WordChip word={currentWord} parentId="generator" />
-      </div>
-
-      <button
-        className="mt-4 px-8 py-1 bg-slate-600 rounded hover:bg-slate-500"
-        onClick={getRandomWord}
-      >
-        New Word
-      </button>
-    </div>
-  );
+			<button
+				className="w-full px-8 py-8 bg-slate-800 text-3xl uppercase font-bold rounded-xl hover:bg-slate-700"
+				onClick={() => getRandomWord()}
+			>
+				New Word
+			</button>
+		</div>
+	);
 }

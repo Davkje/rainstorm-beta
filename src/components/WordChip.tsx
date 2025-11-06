@@ -8,14 +8,7 @@ type Props = {
 
 export default function WordChip({ word, parentId }: Props) {
 	// Gör ordet "sortable" via dnd-kit
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging,
-	} = useSortable({
+	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: `${parentId}-${word}`, // unikt ID för varje chip
 		data: {
 			type: "word",
@@ -32,14 +25,22 @@ export default function WordChip({ word, parentId }: Props) {
 		cursor: "grab",
 	};
 
+	const baseClasses =
+		"flex justify-center items-center rounded-lg text-slate-100 capitalize select-none transition-all";
+	const generatorClasses = "px-10 text-[10vw] font-bold uppercase hover:bg-slate-800";
+	const canvasClasses = "bg-slate-700 px-4 py-1 text-2xl hover:bg-slate-600";
+
 	return (
 		<div
 			ref={setNodeRef}
 			style={style}
 			{...attributes}
 			{...listeners}
-			className={`flex flex-col justify-center px-8 py-4 bg-slate-700 rounded-lg text-slate-100 text-xl capitalize select-none
-        ${isDragging ? "ring-2 ring-slate-400 scale-105" : "hover:bg-slate-600"}`}
+			className={`
+				${baseClasses}
+				${parentId === "generator" ? generatorClasses : canvasClasses}
+				${isDragging ? "bg-slate-950 text-slate-950" : ""}
+				`}
 		>
 			{word}
 		</div>
