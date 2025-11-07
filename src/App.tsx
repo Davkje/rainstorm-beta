@@ -7,12 +7,8 @@ import WordGenerator from "./components/WordGenerator";
 import { DragOverlay } from "@dnd-kit/core";
 import WordChip from "./components/WordChip";
 import { arrayMove } from "@dnd-kit/sortable";
-
-type Canvas = {
-	id: string;
-	title: string;
-	words: string[];
-};
+import WriteCanvas from "./components/WriteCanvas";
+import type { Canvas } from "./types";
 
 export default function App() {
 	const [canvases, setCanvases] = useState<Canvas[]>([
@@ -22,6 +18,7 @@ export default function App() {
 	]);
 
 	const [generatedWord, setGeneratedWord] = useState<string>("rain");
+
 	const [draggingWord, setDraggingWord] = useState<{ word: string; parentId: string } | null>(null);
 	const [isDraggingWord, setIsDraggingWord] = useState(false);
 	const [overCanvasId, setOverCanvasId] = useState<string | null>(null);
@@ -124,6 +121,7 @@ export default function App() {
 				</header>
 				<main className="grow grid grid-cols-2 gap-4">
 					<WordGenerator currentWord={generatedWord} setCurrentWord={setGeneratedWord} />
+					<WriteCanvas canvases={canvases}/>
 					<div className="flex flex-col gap-4">
 						{canvases.map((canvas) => (
 							<IdeaCanvas

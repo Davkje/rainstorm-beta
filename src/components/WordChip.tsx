@@ -1,13 +1,14 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { Canvas, Word } from "../types";
 
-type Props = {
-	word: string;
-	parentId: string;
+type WordChipProps = {
+	word: Word;
+	parentId: Canvas["id"] | "generator";
 };
 
-export default function WordChip({ word, parentId }: Props) {
-	// Gör ordet "sortable" via dnd-kit
+export default function WordChip({ word, parentId }: WordChipProps) {
+
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: `${parentId}-${word}`, // unikt ID för varje chip
 		data: {

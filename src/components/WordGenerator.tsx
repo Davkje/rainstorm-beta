@@ -1,22 +1,22 @@
 import { useState } from "react";
 import { wordBanks } from "../data/wordBanks";
+import type { Word, WordBankName } from "../types";
 import WordChip from "./WordChip";
 
 type Props = {
-	currentWord: string;
-	setCurrentWord: (word: string) => void;
+	currentWord: Word;
+	setCurrentWord: (word: Word) => void;
 };
 
 export default function WordGenerator({ currentWord, setCurrentWord }: Props) {
-	const [bank, setBank] = useState<keyof typeof wordBanks>("nature");
+	const [bank, setBank] = useState<WordBankName>("nature");
 
-	const getRandomWord = (customBank?: keyof typeof wordBanks) => {
+	const getRandomWord = (customBank?: WordBankName) => {
 		const activeBank = customBank ?? bank;
 		const words = wordBanks[activeBank];
 		if (!words || words.length === 0) return;
 
 		let newWord = words[Math.floor(Math.random() * words.length)];
-
 		while (newWord === currentWord && words.length > 1) {
 			newWord = words[Math.floor(Math.random() * words.length)];
 		}
@@ -24,7 +24,7 @@ export default function WordGenerator({ currentWord, setCurrentWord }: Props) {
 		setCurrentWord(newWord);
 	};
 
-	const changeBank = (newBank: keyof typeof wordBanks) => {
+	const changeBank = (newBank: WordBankName) => {
 		setBank(newBank);
 		getRandomWord(newBank);
 	};
@@ -40,10 +40,10 @@ export default function WordGenerator({ currentWord, setCurrentWord }: Props) {
 				{Object.keys(wordBanks).map((bankName) => (
 					<button
 						key={bankName}
-						className={`flex-0 py-2 px-4 rounded text-lg capitalize ${
+						className={`flex-0 py-2 px-4 rounded text-xl capitalize ${
 							bankName === bank ? "bg-slate-800" : "bg-slate-900"
 						} hover:bg-slate-800`}
-						onClick={() => changeBank(bankName as keyof typeof wordBanks)}
+						onClick={() => changeBank(bankName as WordBankName)}
 					>
 						{bankName}
 					</button>

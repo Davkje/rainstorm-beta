@@ -1,4 +1,6 @@
-export const wordBanks = {
+import type { WordBanks } from "../types";
+
+export const wordBanks: WordBanks = {
 	nature: ["flower", "leaf", "wind", "mountain", "moss", "light", "rain"],
 	abstract: ["essence", "dream", "though", "vision", "memory", "feeling", "will"],
 	places: ["castle", "forest", "field", "cave", "hamlet", "basement", "town"],
