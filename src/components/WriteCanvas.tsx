@@ -1,4 +1,4 @@
-import type { Canvas } from "../App";
+import type { Canvas } from "../types";
 
 type Props = {
 	canvases: Canvas[];

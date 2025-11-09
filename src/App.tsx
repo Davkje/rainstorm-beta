@@ -2,13 +2,15 @@ import "./App.css";
 import { useState } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragOverEvent, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { DragOverlay } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import IdeaCanvas from "./components/IdeaCanvas";
 import WordGenerator from "./components/WordGenerator";
-import { DragOverlay } from "@dnd-kit/core";
 import WordChip from "./components/WordChip";
-import { arrayMove } from "@dnd-kit/sortable";
 import WriteCanvas from "./components/WriteCanvas";
-import type { Canvas } from "./types";
+
+import type { Canvas, WordBankName } from "./types";
+import { wordBanks } from "./data/wordBanks";
 
 export default function App() {
 	const [canvases, setCanvases] = useState<Canvas[]>([
@@ -16,14 +18,26 @@ export default function App() {
 		{ id: "canvas-themes", title: "Themes", words: [] },
 		{ id: "canvas-characters", title: "Characters", words: [] },
 	]);
-
-	const [generatedWord, setGeneratedWord] = useState<string>("rain");
-
 	const [draggingWord, setDraggingWord] = useState<{ word: string; parentId: string } | null>(null);
 	const [isDraggingWord, setIsDraggingWord] = useState(false);
 	const [overCanvasId, setOverCanvasId] = useState<string | null>(null);
-
 	const sensors = useSensors(useSensor(PointerSensor));
+
+	const [bank, setBank] = useState<WordBankName>("nature");
+	const [generatedWord, setGeneratedWord] = useState<string>("rain");
+
+	const getRandomWord = (customBank?: WordBankName) => {
+		const activeBank = customBank ?? bank;
+		const words = wordBanks[activeBank];
+		if (!words || words.length === 0) return;
+
+		let newWord = words[Math.floor(Math.random() * words.length)];
+		while (newWord === generatedWord && words.length > 1) {
+			newWord = words[Math.floor(Math.random() * words.length)];
+		}
+
+		setGeneratedWord(newWord);
+	};
 
 	const handleDragStart = (event: DragStartEvent) => {
 		const activeData = event.active.data?.current as { word: string; parentId: string } | undefined;
@@ -69,20 +83,46 @@ export default function App() {
 
 		setCanvases((prev) => {
 			let updated = [...prev];
+			let didAddWord = false;
 
-			// Drag to new Canvas
-			if (activeParent !== overParent) {
+			// FROM GENERATOR
+			if (activeParent === "generator") {
 				updated = updated.map((c) => {
-					if (c.id === activeParent)
-						return { ...c, words: c.words.filter((w) => w !== activeWord) };
-					if (c.id === overParent && !c.words.includes(activeWord))
-						return { ...c, words: [...c.words, activeWord] };
+					if (c.id === overParent) {
+						if (!c.words.includes(activeWord)) {
+							didAddWord = true;
+							return { ...c, words: [...c.words, activeWord] };
+						}
+					}
 					return c;
 				});
+
+				if (didAddWord) getRandomWord();
 				return updated;
 			}
 
-			// Drag Sorting
+			// FROM CANVAS
+			if (activeParent !== overParent) {
+				const sourceCanvas = prev.find((c) => c.id === activeParent);
+				const targetCanvas = prev.find((c) => c.id === overParent);
+
+				if (!sourceCanvas || !targetCanvas) return prev;
+
+				if (targetCanvas.words.includes(activeWord)) {
+					return prev;
+				}
+
+				const updated = prev.map((c) => {
+					if (c.id === activeParent)
+						return { ...c, words: c.words.filter((w) => w !== activeWord) };
+					if (c.id === overParent) return { ...c, words: [...c.words, activeWord] };
+					return c;
+				});
+
+				return updated;
+			}
+
+			// REORDER IN SAME CANVAS
 			const canvasIndex = updated.findIndex((c) => c.id === activeParent);
 			if (canvasIndex === -1) return updated;
 
@@ -120,8 +160,14 @@ export default function App() {
 					</nav>
 				</header>
 				<main className="grow grid grid-cols-2 gap-4">
-					<WordGenerator currentWord={generatedWord} setCurrentWord={setGeneratedWord} />
-					<WriteCanvas canvases={canvases}/>
+					<WordGenerator
+						currentWord={generatedWord}
+						setCurrentWord={setGeneratedWord}
+						getRandomWord={getRandomWord}
+						bank={bank}
+						setBank={setBank}
+					/>
+					<WriteCanvas canvases={canvases} />
 					<div className="flex flex-col gap-4">
 						{canvases.map((canvas) => (
 							<IdeaCanvas

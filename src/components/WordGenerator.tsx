@@ -1,28 +1,16 @@
-import { useState } from "react";
-import { wordBanks } from "../data/wordBanks";
-import type { Word, WordBankName } from "../types";
 import WordChip from "./WordChip";
+import type { WordBankName, Word } from "../types";
+import { wordBanks } from "../data/wordBanks";
 
 type Props = {
 	currentWord: Word;
 	setCurrentWord: (word: Word) => void;
+	getRandomWord: (customBank?: WordBankName) => void;
+	bank: WordBankName;
+	setBank: (bank: WordBankName) => void;
 };
 
-export default function WordGenerator({ currentWord, setCurrentWord }: Props) {
-	const [bank, setBank] = useState<WordBankName>("nature");
-
-	const getRandomWord = (customBank?: WordBankName) => {
-		const activeBank = customBank ?? bank;
-		const words = wordBanks[activeBank];
-		if (!words || words.length === 0) return;
-
-		let newWord = words[Math.floor(Math.random() * words.length)];
-		while (newWord === currentWord && words.length > 1) {
-			newWord = words[Math.floor(Math.random() * words.length)];
-		}
-		
-		setCurrentWord(newWord);
-	};
+export default function WordGenerator({ currentWord, getRandomWord, bank, setBank }: Props) {
 
 	const changeBank = (newBank: WordBankName) => {
 		setBank(newBank);
